@@ -1,0 +1,26 @@
+{
+  "name": "http_redirect",
+  "version": "1.0.0",
+  "description": "simple http redirect",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diegobm23/http_redirect.git"
+  },
+  "keywords": [
+    "redirect",
+    "http"
+  ],
+  "author": "diego.moreira",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/diegobm23/http_redirect/issues"
+  },
+  "homepage": "https://github.com/diegobm23/http_redirect#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
