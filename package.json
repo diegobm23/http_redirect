@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/diegobm23/http_redirect#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-http-proxy": "^1.6.0"
   }
 }
