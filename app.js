@@ -10,6 +10,7 @@ let targetUrl
 function selectProxyHost(req) {
   reqUrl = req.host + req.url;
   targetUrl = req.host + req.url;
+  console.log("Chegando requisição para " + reqUrl);
 
   while ((m = regex.exec(reqUrl)) !== null) {
     if (m.index === regex.lastIndex) {
@@ -22,6 +23,7 @@ function selectProxyHost(req) {
     });
   }
 
+  console.log("Redirecionando requisição para " + targetUrl);
   return targetUrl;
 }
 
