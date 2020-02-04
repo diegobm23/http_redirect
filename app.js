@@ -27,7 +27,12 @@ function selectProxyHost(req) {
   return targetUrl;
 }
 
-app.use(proxy(selectProxyHost));
+app.use(proxy(selectProxyHost, {
+  proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
+    proxyReqOpts.headers.ambiente = srcReq.headers.ambiente;
+    return proxyReqOpts;
+  }
+}));
 
 const port = process.env.port || 3000;
 
