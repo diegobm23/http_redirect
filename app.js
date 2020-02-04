@@ -29,7 +29,11 @@ function selectProxyHost(req) {
 
 app.use(proxy(selectProxyHost, {
   proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
-    proxyReqOpts.headers.ambiente = srcReq.headers.ambiente;
+    
+    if (srcReq.headers.ambiente) {
+      proxyReqOpts.headers.ambiente = srcReq.headers.ambiente;
+    }
+
     return proxyReqOpts;
   }
 }));
