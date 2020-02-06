@@ -1,43 +1,42 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-console */
 const express = require('express');
 const proxy = require('express-http-proxy');
+
 const app = express();
-const regex = /[w][w][w][\d]*[\d]/gm;
+const regex = /[w]{3}\d+/gm;
 
-let m;
-let reqUrl;
-let targetUrl
+const selectProxyHost = ({ host, url, headers }) => {
+  const requested = `${host}${url}`;
+  let target = `${host}${url}`;
 
-function selectProxyHost(req) {
-  reqUrl = req.host + req.url;
-  targetUrl = req.host + req.url;
-  console.log("Chegando requisição para " + reqUrl);
+  console.log(`Chegando requisição para ${requested}`);
 
-  while ((m = regex.exec(reqUrl)) !== null) {
-    if (m.index === regex.lastIndex) {
-        regex.lastIndex++;
+  let execution = regex.exec(requested);
+
+  while (execution !== null) {
+    if (execution.index === regex.lastIndex) {
+      regex.lastIndex += 1;
     }
 
-    m.forEach((match, groupIndex) => {
-      targetUrl = reqUrl.replace(match, "www");
-      req.headers.ambiente = match;
-    });
+    target = execution.reduce((accumulator, match) => accumulator.replace(match, 'www'), `${host}${url}`);
+    headers.ambiente = execution[execution.length - 1];
+    execution = regex.exec(requested);
   }
 
-  console.log("Redirecionando requisição para " + targetUrl);
-  return targetUrl;
-}
+  console.log(`Redirecionando requisição para ${target}`);
+
+  return target;
+};
 
 app.use(proxy(selectProxyHost, {
-  proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
-    
+  proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     if (srcReq.headers.ambiente) {
       proxyReqOpts.headers.ambiente = srcReq.headers.ambiente;
     }
 
     return proxyReqOpts;
-  }
+  },
 }));
 
-const port = process.env.port || 3000;
-
-app.listen(port, () => console.log("http_redirect inicializado"));
+const server = app.listen(process.env.PORT || 3000, () => console.log(`Redirecionador HTTP sendo executado na porta ${server.address().port}`));
