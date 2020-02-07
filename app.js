@@ -8,8 +8,9 @@ let reqUrl;
 let targetUrl
 
 function selectProxyHost(req) {
-  reqUrl = req.host + req.url;
-  targetUrl = req.host + req.url;
+  reqUrl = req.hostname + req.url;
+  targetUrl = req.hostname + req.url;
+  
   console.log("Chegando requisição para " + reqUrl);
 
   while ((m = regex.exec(reqUrl)) !== null) {
@@ -19,7 +20,6 @@ function selectProxyHost(req) {
 
     m.forEach((match, groupIndex) => {
       targetUrl = reqUrl.replace(match, "www");
-      req.headers.ambiente = match;
     });
   }
 
@@ -27,16 +27,11 @@ function selectProxyHost(req) {
   return targetUrl;
 }
 
-app.use(proxy(selectProxyHost, {
-  proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
-    
-    if (srcReq.headers.ambiente) {
-      proxyReqOpts.headers.ambiente = srcReq.headers.ambiente;
-    }
-
-    return proxyReqOpts;
-  }
-}));
+app.use((req, res, next) => {
+  req.headers.ambiente = 'www3';
+  res.set("ambiente", "www3");
+  next();
+}, proxy(selectProxyHost));
 
 const port = process.env.port || 3000;
 
