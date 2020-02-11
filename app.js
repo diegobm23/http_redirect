@@ -3,13 +3,15 @@ const request = require("request-promise-native");
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const app = express();
-const regex = /[w][w][w][\d]*[\d]/gm;
 
-let m;
-let reqUrl;
-let targetUrl
+const regex = /[w][w][w][\d]*[\d]/gm;
+const img = ['.png', '.jpg', '.gif', '.ico'];
 
 async function selectProxyHost(req) {
+  let m;
+  let reqUrl;
+  let targetUrl;
+
   reqUrl = req.hostname;
   targetUrl = req.hostname;
   
@@ -36,41 +38,68 @@ async function sendRequest(reqData) {
 
     let options = {
       url: "https://" + url + reqData.url,
-      method: reqData.method,
       headers: reqData.headers
     };
 
-    if (options.headers['content-type'] && options.headers['content-type'] == 'application/json') {
-      options.body = reqData.body;
-      options.json = true;
+  //JSON
+  if (options.headers['content-type'] && options.headers['content-type'] == 'application/json') {
+    options.method = reqData.method;
+    options.body = reqData.body;
+    options.json = true;
+  }
+
+    //Imagens
+    if (reqData.path.indexOf('.png') > -1 || reqData.path.indexOf('.jpg') > -1 || reqData.path.indexOf('.gif') > -1 || reqData.path.indexOf('.ico') > -1) {
+      options.encoding = null;
+    }
+
+    if (options.headers['accept-encoding']) {
+      options.headers['accept-encoding'] = null;
     }
 
     request(options)
-    .then((response) => {
+    .then(response => {
       resolve(response);
     })
-    .catch((error) => {
+    .catch(error => {
       reject(error);
     });
   });
 }
 
-app.set('view engine', 'pug');
-app.use(compression({level: 6}));
-app.use(bodyParser.json({'limit': '50mb'}));
-app.use(bodyParser.urlencoded({extended: false}));
-
 app.use(async (req, res) => {
 
   sendRequest(req)
-  .then((response) => {
-    console.log(response);
+  .then(response => {
+
+    //CSS
+    if (req.path.indexOf('.css') > -1) {
+      res.set({'Content-Type': 'text/css; charset=UTF-8'});
+    }
+
+    //Imagens
+    if (req.path.indexOf('.png') > -1 || req.path.indexOf('.jpg') > -1 || req.path.indexOf('.gif') > -1 || req.path.indexOf('.ico') > -1) {
+      res.set({'Accept-Ranges': 'bytes'});
+      res.set({'Content-Type': 'image/png'});
+    }
+
+    //Fontes
+    if (req.path.indexOf('.woff2') > -1) {
+      res.set({'Content-Type': 'font/woff2'});
+    }
+
     res.send(response);
   })
-  .catch((error) => {
+  .catch(error => {
     res.status(error.statusCode || 500).send(error.error);
+    console.error(error.error);
   });
 });
+
+app.use(compression({level: 6}));
+app.use(bodyParser.json({'limit': '50mb'}));
+app.use(bodyParser.urlencoded({extended: false}));
+app.disable('x-powered-by');
 
 const port = process.env.port || 3000;
 
