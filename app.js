@@ -7,6 +7,20 @@ const app = express();
 const regex = /[w][w][w][\d]*[\d]/gm;
 const img = ['.png', '.jpg', '.gif', '.ico'];
 
+/**
+ * Function that returns if the parameter path is a image request.
+ * 
+ * @param {path} string path from the URL of the request.
+ * @return {boolean} return true if the path contains .png, .jpg, .gif or .ico, if not false.
+ */
+function isImageRequest(path) {
+  let find = img.filter(m => {
+    return path.indexOf(m) > -1;
+  });
+
+  return (find.length > 0);
+}
+
 async function selectProxyHost(req) {
   let m;
   let reqUrl;
@@ -41,15 +55,15 @@ async function sendRequest(reqData) {
       headers: reqData.headers
     };
 
-  //JSON
-  if (options.headers['content-type'] && options.headers['content-type'] == 'application/json') {
-    options.method = reqData.method;
-    options.body = reqData.body;
-    options.json = true;
-  }
+    //JSON
+    if (options.headers['content-type'] && options.headers['content-type'] == 'application/json') {
+      options.method = reqData.method;
+      options.body = reqData.body;
+      options.json = true;
+    }
 
     //Imagens
-    if (reqData.path.indexOf('.png') > -1 || reqData.path.indexOf('.jpg') > -1 || reqData.path.indexOf('.gif') > -1 || reqData.path.indexOf('.ico') > -1) {
+    if (isImageRequest(reqData.path)) {
       options.encoding = null;
     }
 
@@ -78,7 +92,7 @@ app.use(async (req, res) => {
     }
 
     //Imagens
-    if (req.path.indexOf('.png') > -1 || req.path.indexOf('.jpg') > -1 || req.path.indexOf('.gif') > -1 || req.path.indexOf('.ico') > -1) {
+    if (isImageRequest(req.path)) {
       res.set({'Accept-Ranges': 'bytes'});
       res.set({'Content-Type': 'image/png'});
     }
