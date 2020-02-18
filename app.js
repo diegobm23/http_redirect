@@ -1,11 +1,14 @@
 const express = require('express');
 const request = require("request-promise-native");
 const bodyParser = require('body-parser');
-const compression = require('compression');
 const app = express();
 
 const regex = /[w][w][w][\d]*[\d]/gm;
 const img = ['.png', '.jpg', '.gif', '.ico'];
+
+app.use(bodyParser.json({'limit': '50mb'}));
+app.use(bodyParser.urlencoded({extended: false}));
+app.disable('x-powered-by');
 
 /**
  * Function that returns if the parameter path is a image request.
@@ -38,7 +41,10 @@ async function selectProxyHost(req) {
 
     m.forEach(async (match, groupIndex) => {
       targetUrl = reqUrl.replace(match, "www");
-      req.headers.ambiente = match;
+
+      if (!req.headers.ambiente) {
+        req.headers.ambiente = match;
+      }
     });
   }
 
@@ -52,12 +58,14 @@ async function sendRequest(reqData) {
 
     let options = {
       url: "https://" + url + reqData.url,
-      headers: reqData.headers
+      headers: reqData.headers,
+      method: reqData.method
     };
 
+    options.headers['connection'] = 'Keep-Alive';
+
     //JSON
-    if (options.headers['content-type'] && options.headers['content-type'] == 'application/json') {
-      options.method = reqData.method;
+    if (options.headers['content-type'] && (options.headers['content-type'].indexOf('application/json') > -1)) {
       options.body = reqData.body;
       options.json = true;
     }
@@ -68,8 +76,12 @@ async function sendRequest(reqData) {
     }
 
     if (options.headers['accept-encoding']) {
-      options.headers['accept-encoding'] = null;
+      delete options.headers['accept-encoding'];
     }
+
+    console.log('============================================================');
+    console.log(options);
+    console.log('============================================================');
 
     request(options)
     .then(response => {
@@ -99,7 +111,16 @@ app.use(async (req, res) => {
 
     //Fontes
     if (req.path.indexOf('.woff2') > -1) {
+      res.set({'Accept-Ranges': 'bytes'});
       res.set({'Content-Type': 'font/woff2'});
+    } else if (req.path.indexOf('.woff') > -1) {
+      res.set({'Accept-Ranges': 'bytes'});
+      res.set({'Content-Type': 'font/woff'});
+    }
+
+    if (req.path.indexOf('.ttf') > -1) {
+      res.set({'Accept-Ranges': 'bytes'});
+      res.set({'Content-Type': 'font/ttf'});
     }
 
     res.send(response);
@@ -110,11 +131,6 @@ app.use(async (req, res) => {
   });
 });
 
-app.use(compression({level: 6}));
-app.use(bodyParser.json({'limit': '50mb'}));
-app.use(bodyParser.urlencoded({extended: false}));
-app.disable('x-powered-by');
-
 const port = process.env.port || 3000;
 
-app.listen(port, () => console.log("http_redirect inicializado"));
+app.listen(port, () => console.log("http_redirect running"));
